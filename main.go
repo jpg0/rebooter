@@ -2,15 +2,45 @@ package main
 
 import (
 	"syscall"
+	"github.com/gorilla/mux"
+	"net/http"
+	"fmt"
+	"os"
+	"log"
+	"strconv"
 )
 
-const LINUX_REBOOT_MAGIC1 uintptr = 0xfee1dead
-const LINUX_REBOOT_MAGIC2 uintptr = 672274793
+func main() {
+
+	if len(os.Args) != 1 {
+		log.Fatalf("Usage %v <port>", os.Args[0])
+	}
+
+	port, err := strconv.Atoi(os.Args[1])
+
+	if err != nil {
+		log.Fatalf("Failed to parse port number %v [%v]", port, err)
+	}
+
+	r := mux.NewRouter()
+	r.Methods("DELETE").Path("/").HandlerFunc(Reboot)
+	http.Handle("/", r)
+	err = http.ListenAndServe(":8080", nil)
+
+	if err != nil {
+		panic(err)
+	}
+}
+
 const LINUX_REBOOT_CMD_RESTART uintptr = 0x1234567
 
-func main() {
-	syscall.Syscall(syscall.SYS_REBOOT,
-		LINUX_REBOOT_MAGIC1,
-		LINUX_REBOOT_MAGIC2,
-		LINUX_REBOOT_CMD_RESTART)
+func Reboot(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Remote request received, attempting reboot...")
+	err := syscall.Reboot(int(LINUX_REBOOT_CMD_RESTART))
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusAccepted)
+	}
 }
