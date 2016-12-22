@@ -6,20 +6,21 @@ import (
 	"net/http"
 	"fmt"
 	"os"
-	"log"
 	"strconv"
 )
 
 func main() {
 
-	if len(os.Args) != 1 {
-		log.Fatalf("Usage %v <port>", os.Args[0])
+	if len(os.Args) != 2 {
+		fmt.Printf("Usage %v <port>", os.Args[0])
+		os.Exit(2)
 	}
 
 	port, err := strconv.Atoi(os.Args[1])
 
 	if err != nil {
-		log.Fatalf("Failed to parse port number %v [%v]", port, err)
+		fmt.Printf("Failed to parse port number %v [%v]", port, err)
+		os.Exit(2)
 	}
 
 	r := mux.NewRouter()
