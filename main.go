@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"fmt"
 	"os"
-	"strconv"
 )
 
 func main() {
@@ -16,17 +15,10 @@ func main() {
 		os.Exit(2)
 	}
 
-	port, err := strconv.Atoi(os.Args[1])
-
-	if err != nil {
-		fmt.Printf("Failed to parse port number %v [%v]", port, err)
-		os.Exit(2)
-	}
-
 	r := mux.NewRouter()
 	r.Methods("DELETE").Path("/").HandlerFunc(Reboot)
 	http.Handle("/", r)
-	err = http.ListenAndServe(":8080", nil)
+	err := http.ListenAndServe(":" + os.Args[1], nil)
 
 	if err != nil {
 		panic(err)
