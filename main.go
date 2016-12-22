@@ -11,7 +11,7 @@ import (
 func main() {
 
 	if len(os.Args) != 2 {
-		fmt.Printf("Usage %v <port>", os.Args[0])
+		fmt.Printf("Usage %v <port>\n", os.Args[0])
 		os.Exit(2)
 	}
 
@@ -32,6 +32,7 @@ func Reboot(w http.ResponseWriter, r *http.Request) {
 	err := syscall.Reboot(int(LINUX_REBOOT_CMD_RESTART))
 
 	if err != nil {
+		fmt.Printf("Failed: %v\n", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	} else {
 		w.WriteHeader(http.StatusAccepted)
