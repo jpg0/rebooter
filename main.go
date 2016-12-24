@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 func main() {
@@ -24,12 +25,15 @@ func main() {
 		panic(err)
 	}
 }
-
-const LINUX_REBOOT_CMD_RESTART uintptr = 0x1234567
-
 func Reboot(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Remote request received, attempting reboot...")
-	err := syscall.Reboot(int(LINUX_REBOOT_CMD_RESTART))
+	err := RebootWithInit()
+
+	if err != nil {
+		fmt.Println("Failed to reboot via init. Attempting direct reboot...")
+	}
+
+	err = RebootWithSyscall()
 
 	if err != nil {
 		fmt.Printf("Failed: %v\n", err)
@@ -37,4 +41,14 @@ func Reboot(w http.ResponseWriter, r *http.Request) {
 	} else {
 		w.WriteHeader(http.StatusAccepted)
 	}
+}
+
+func RebootWithInit() error {
+	return exec.Command("/sbin/reboot").Wait()
+}
+
+const LINUX_REBOOT_CMD_RESTART uintptr = 0x1234567
+
+func RebootWithSyscall() error {
+	return syscall.Reboot(int(LINUX_REBOOT_CMD_RESTART))
 }
