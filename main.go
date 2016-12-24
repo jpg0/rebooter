@@ -7,13 +7,20 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 )
 
-func main() {
+const DEFAULT_DELAY = time.Second * 3
 
+func main() {
 	if len(os.Args) != 2 {
 		fmt.Printf("Usage %v <port>\n", os.Args[0])
 		os.Exit(2)
+	}
+
+	if os.Geteuid() != 0 {
+		fmt.Print("Must be run as root")
+		os.Exit(3)
 	}
 
 	r := mux.NewRouter()
@@ -27,6 +34,14 @@ func main() {
 }
 func Reboot(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Remote request received, attempting reboot...")
+	go ScheduleReboot(DEFAULT_DELAY)
+	w.WriteHeader(http.StatusAccepted)
+}
+
+func ScheduleReboot(d time.Duration) {
+
+	time.Sleep(d)
+
 	err := RebootWithInit()
 
 	if err != nil {
@@ -36,10 +51,7 @@ func Reboot(w http.ResponseWriter, r *http.Request) {
 	err = RebootWithSyscall()
 
 	if err != nil {
-		fmt.Printf("Failed: %v\n", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	} else {
-		w.WriteHeader(http.StatusAccepted)
+		fmt.Println("Failed to reboot directly")
 	}
 }
 
